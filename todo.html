@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My To-Do List</title>
+  <style>
+    :root {
+      --bg-color: #f4f4f4;
+      --text-color: #333;
+      --primary: #007bff;
+      --card: #fff;
+    }
+    body.dark {
+      --bg-color: #1e1e1e;
+      --text-color: #f0f0f0;
+      --primary: #1e90ff;
+      --card: #2a2a2a;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 30px 10px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      background: var(--card);
+      padding: 30px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+    }
+
+    #themeToggle {
+      background: none;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .filters .filter {
+      background: none;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-weight: bold;
+      color: var(--text-color);
+      opacity: 0.6;
+    }
+
+    .filters .filter.active {
+      opacity: 1;
+      border-bottom: 2px solid var(--primary);
+    }
+
+    #taskList {
+      list-style: none;
+      padding: 0;
+    }
+
+    #taskList li {
+      background: #eee;
+      margin-bottom: 10px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      border-radius: 4px;
+      transition: 0.3s;
+      flex-wrap: wrap;
+    }
+
+    body.dark #taskList li {
+      background: #444;
+    }
+
+    .task-text {
+      flex: 1;
+      word-wrap: break-word;
+    }
+
+    .priority {
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+
+    .priority.high {
+      color: #dc3545;
+    }
+
+    .priority.moderate {
+      color: #ffc107;
+    }
+
+    .priority.low {
+      color: #28a745;
+    }
+
+    .completed .task-text {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .task-actions button {
+      background: none;
+      border: none;
+      margin-left: 10px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    #taskCount {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>To-Do List</h1>
+      <button id="themeToggle"><span id="themeIcon">🌙</span> <span id="themeText">Dark Theme</span></button>
+    </header>
+
+    <div class="controls">
+      <div class="filters">
+        <button data-filter="all" class="filter active">All</button>
+        <button data-filter="completed" class="filter">Completed</button>
+        <button data-filter="incomplete" class="filter">Incomplete</button>
+      </div>
+    </div>
+
+    <ul id="taskList"></ul>
+    <p id="taskCount">Total Tasks: 0</p>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const taskList = document.getElementById('taskList');
+      const taskCount = document.getElementById('taskCount');
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      const themeText = document.getElementById('themeText');
+      const filters = document.querySelectorAll('.filter');
+
+      let tasks = [
+        { text: "Check up for any outing invitations", completed: false, priority: "moderate" },
+        { text: "Complete any pending work left over yesterday", completed: false, priority: "high" },
+        { text: "Check out for classes to be taken", completed: false, priority: "high" },
+        { text: "Take a nap for 2 hour", completed: false, priority: "moderate" },
+        { text: "Watch lectures to develop the skills", completed: false, priority: "moderate" },
+        { text: "Make a call to parents and discuss about today's incidents", completed: false, priority: "high" },
+        { text: "Do laundry", completed: false, priority: "low" },
+        { text: "Go for a jog", completed: false, priority: "moderate" }
+      ];
+
+      const stored = localStorage.getItem('tasks');
+      if (stored) tasks = JSON.parse(stored);
+
+      function renderTasks(filter = 'all') {
+        taskList.innerHTML = '';
+        const filtered = tasks.filter(task =>
+          filter === 'all' ? true : filter === 'completed' ? task.completed : !task.completed
+        );
+
+        filtered.forEach((task, index) => {
+          const li = document.createElement('li');
+          li.className = task.completed ? 'completed' : '';
+
+          const span = document.createElement('span');
+          span.className = 'task-text';
+          span.textContent = task.text;
+
+          const priorityTag = document.createElement('div');
+          priorityTag.className = `priority ${task.priority}`;
+          priorityTag.textContent = `Priority: ${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}`;
+
+          const actions = document.createElement('div');
+          actions.className = 'task-actions';
+
+          const completeBtn = document.createElement('button');
+          completeBtn.innerHTML = task.completed ? '↩️' : '✅';
+          completeBtn.title = task.completed ? 'Undo' : 'Complete';
+          completeBtn.onclick = () => toggleComplete(index);
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.innerHTML = '🗑️';
+          deleteBtn.title = 'Delete';
+          deleteBtn.onclick = () => deleteTask(index);
+
+          actions.append(completeBtn, deleteBtn);
+
+          const wrapper = document.createElement('div');
+          wrapper.style.flex = '1';
+          wrapper.append(span, priorityTag);
+
+          li.append(wrapper, actions);
+          taskList.appendChild(li);
+        });
+
+        taskCount.textContent = `Total Tasks: ${tasks.length}`;
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+      }
+
+      function toggleComplete(index) {
+        tasks[index].completed = !tasks[index].completed;
+        renderTasks(getActiveFilter());
+      }
+
+      function deleteTask(index) {
+        tasks.splice(index, 1);
+        renderTasks(getActiveFilter());
+      }
+
+      themeToggle.onclick = () => {
+        document.body.classList.toggle('dark');
+        const isDark = document.body.classList.contains('dark');
+        themeIcon.textContent = isDark ? '☀️' : '🌙';
+        themeText.textContent = isDark ? 'Light Theme' : 'Dark Theme';
+      };
+
+      filters.forEach(button => {
+        button.onclick = () => {
+          filters.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          renderTasks(button.dataset.filter);
+        };
+      });
+
+      function getActiveFilter() {
+        return document.querySelector('.filter.active').dataset.filter;
+      }
+
+      renderTasks();
+    });
+  </script>
+</body>
+</html>
